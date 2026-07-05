@@ -1,0 +1,1035 @@
+<html lang="en">
+<head>
+<meta charset="UTF-8"></meta>
+<title>Stadium Defender</title>
+<style>
+body { background-color: #222; color: #fff; font-family: 'Courier New', monospace; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 20px; }
+canvas { background-color: #7EC0EE; border: 4px solid #fff; box-shadow: 0 0 20px rgba(0, 0, 0, 0.8); image-rendering: pixelated; }
+</style>
+</head>
+<body>
+<canvas height="700" id="gameCanvas" width="600"></canvas>
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+/* --- ASSETS --- */
+const bgImg = new Image(); 
+bgImg.src = 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/' + 
+            'AVvXsEitv3nCUOfRp9dAC0c_TFh93r9Z92d2cyo3mdcCMGovrV5F8AH-KlVpGhyAiUo5jkMEkbAisMiduG_eOzOYBTHLV_7iw8nZVHGsF1-2_dLHKSHMvNJqPtPmPN2R3uf4Nt_1-HBTK9BSR_EfCTXC_3_89ARM557EJcFPOsLTlUFPqMazbCUwIxRVeHhFBd8M' + 
+            '/s1600-rw/stadium%20background2.png';
+
+const ravenImage = new Image(); 
+ravenImage.src = 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/' + 
+                 'AVvXsEjFbxmxiQtIal48L6rKIcRaOQNjDXKufTUUXRpHei0j2rBafzhzNIF2U1tps4HzK4aMPpqQ3IwdXSO6v0VAmdLX5FjZ7FG3VsMOMtC5M8s4lWA2HWVIAlsiD2YEtCigcNIACfFynjJBW8mCdgGdjAkRxcvBG65vxQkezLuOR-pEeiy4vvS1jiwV4SnULDyU' + 
+                 '/s320-rw/raven%20sprite%20vertical.png';
+
+const doveSheet = new Image(); 
+doveSheet.src = 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/' + 
+                'AVvXsEgi7ar_WSdppvi0ffTfj_DlpPpysxVvpB9dvlQyYTaa_E5_Q0l8RkJrQJ-7QD3ZQAfeyArIIJ5StyvUbWoPi-rKkVdw_U-KNuMcyljT4nJVFifYB-HO7fGNfVYFQp6_vyoHSzrSVrTZfeQt_i4CDDMJh3VKPkJ723xBBNUv9h-m5OpAdFxWJFY6jTPNWWZ_' + 
+                '/s320-rw/diving%20doves%20trans.png';
+
+const doveWire = new Image(); 
+doveWire.src = 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/' + 
+               'AVvXsEj7qb08DLoYnWhFqRduFAOYjG7scrKFAWKpRMFVhX3mbpUI7r4hxCQh7Av218PYpCCDsKyfsBz77ut0Z3SoAOAOoXOvDa1aEUecr6iKRbj8t3bWrTPmtfv7AnXkxqS9e_ca_1XZ1GKPRHLLXw-o-cEvhKR6pKUa2lXXL2anJwqvk0HOglzuaNZ73NiqUZQH' + 
+               '/s1600-rw/dovewire.png';
+
+const ravenWireImg = new Image(); 
+ravenWireImg.src = 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/' + 
+                   'AVvXsEiCYed4NDi3KByajDatN4Eo2_VBks8Lmd-m30306K29oMkI69kouf2jijQQnxofCgl2ioreBMeK6Ty02hPs5xd3RDXmJbqDzgpiYvE9wR46Wb8-QqknOnzzts4YB50mLYPY4yvnI2tuL3i7biD0rZ7XiCMKNC5AzlLOs6a-RC5ZlMOXJcteLyeLtEwdg5s2' + 
+                   '/s16000/raven%20on%20wire%20trans.png';
+
+const rDog = new Image(); 
+rDog.src = 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/' + 
+           'AVvXsEiSP_CwLhkk466CmgYioTKq-sofHDuWHf2wb0PNIzmfzaKNKXt9fW8AAFqIQ_fxobofC_B8kw149eSYcXVt4DKp8Xe_x6bfKi9iMXQmBgnEH-efXbP7i1pid0KLITIYnCXsSTGsInYvneaLBlocyWLHK1aTBUsFTfSmSy1K-cbnZsx_QFPViGLEbyIuNRBB' + 
+           '/s320-rw/Shady%20right.png';
+
+const lDog = new Image(); 
+lDog.src = 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/' + 
+           'AVvXsEiTbo__LqTJPirhQluUVDHzEQ3ryaIwmZqk27mVBfCjITsF_2tbcihjqvIZx2AcYotT-afI2oyCtF6UsMsaOiRFtr795Q78DoT9NaCfeYfsnHtPQH7gVP79A0GMfQqMYhJ3t4P9avSG5F9FcL0tdZrG_ReGrY-_zK9iJBoqWhN7dt71FUIqWtFYmpuIrpMv' + 
+           '/s320-rw/Shady%20left.png';
+
+/* Projectiles & UI */
+const spiralBallImg = new Image(); 
+spiralBallImg.src = 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/' + 
+                    'AVvXsEj_Vz6WzhkwQkX6UBKUbIbyZZeTtJzR3VaJcSGwZhjhwxRgXZ0Zzjb-xlSRvbsPb8nPHnZ7yW9PMzD1uIluZQkqJMNOz8LmSvMx57kmFjN07EPA1Xc7gI8cLvxNUhmNNSP9qrG4VCnUUN76Am5hYQpnN149Sk62IlRPgzpZ2ioCa_sYC-GxXqEr477wE_Cz' + 
+                    '/s1600-rw/football%20spiral.png';
+
+const staticEggImg = new Image(); 
+staticEggImg.src = 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/' + 
+                   'AVvXsEg2G1JWzr8DrWccosIXpfMafnSWHKnQO7E_czeqivjWDnfxLB5Kbab6SzZN2l79SQZMg5T76UUCtVBUG4Dnjjb-CTYPGVjsUus0fk5R6Y7YH-noQPZK42V6KRrGA7F_zhuE22exNar8haCbDjpTpy2AYLulxuzS2DpEXuOHwuoW8sbmj7a-iUHh4AFP29k9' + 
+                   '/s1600-rw/football%20egg.png';
+
+const eggImg = new Image(); 
+eggImg.src = 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/' + 
+             'AVvXsEgqw5_rfpaL_scCqIYIAlWLVQhtdcUkbKyuoZ_47tQVsUlNB9BCzViA_PTL49xRQYtPdaKLJO6c5LROsojXTv9YmDQtKniis5j0rYWdNdcm3vTHRWR_vdA930XkDUBljkWumw2G7YmCdjw7HduRazjaRw-z4bHe-_I8jmZK9HQrB-z7r6DE9QcyswSUwS3v' + 
+             '/s1600-rw/football%20egg.png';
+
+/* Boss Assets */
+const kingHenryImg = new Image(); 
+kingHenryImg.src = 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/' + 
+                   'AVvXsEhaWIGhBowVmgr7ikZk4m2Vb2Yz-6Mk7bf6BR2_DI5fJjdkF0JgPdQQLDH3Kp6BL_E37ircAa-ZTRB8rg_Uq2_cxSQyproV72vXA6iYpsLwFFwTtpHVtwaLnb-5vQxEzMIIGYwXSI-1IboLKaTDeQXi1XHeZRKHfB1rDxZ6nCpfDCqWPcT9XCR69f5Ee2pi' + 
+                   '/s1600-rw/King%20Henry%20Sprite%20Sheet5.png';
+
+const pRavenImg = new Image(); 
+pRavenImg.src = 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/' + 
+                'AVvXsEiZ_jvHvMNQW2D62iCli_0p9xpsfBRBBsCm3S87FK5fYsM7BmLE0Ndon5cH7zDt5vKq4apNipvryOft6svVSEHosNBU9gFtUw4GZMpvPKIObyGiiQ3kL6u_ZfnfxTHRgf60xtOm-uo65AEYQzks9IUsStwPbkBpTASbc-YmOU3F9FZexsUUCO7S7BmwD0CS' + 
+                '/s16000-rw/purple%20raven.png';
+
+const shadyRightImg = new Image(); 
+shadyRightImg.src = 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/' + 
+                    'AVvXsEgvlHaUQnucpAU5fgk3P457mjzt9AKK7YUdRQ0iIR36cb9U7p5FkgpbM7S-YRgICVjHbduxLKWleMDDRXey9xDGV8og6AD7nE6ukOLFW0FK76VPZN3R8BxGVMtnKlyFmLKs49_IzhgdPj1Ou_eN8j_ftlwF4UXkJElZ7sFPxR7skjFCblvMPBXEl8tgnNGm' + 
+                    '/s16000-rw/Lamar%20turn%20right%20trans.png';
+
+const shadyLeftImg = new Image(); 
+shadyLeftImg.src = 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/' + 
+                   'AVvXsEiklYSi-YtmGyseSpmhrY0USUM_DtvZPC7br3DV5oT6spUCOCKGvB0kD0YD2fHu6lHCo5KGswIHk7Bs10KGwFevn8smLPp5E9BdAQu_XwOsEPNEwQabR7kJ2kfacasN5ki9wMkCFDW3OHYt42ndubnwmqjACUzM_lxnyEuumw0b_pN-EcBLxlJxhCNdHVFk' + 
+                   '/s16000-rw/Lamar%20turn%20left%20trans.png';
+
+const rrImg = new Image(); 
+rrImg.src = 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/' + 
+            'AVvXsEgR83cCPDNZbDsjWNpHwusmg-67nYwOn-6T5cSld90B2EuTWPZachtDyCwOOibqkRQ_JosfTmLzNMOHFzlTpjfI6WZP1sBaO-nPDnPwD0mUE1iKuqRlWEa0DN8TOsAALhpDAi0EDhxd9ypeDGfm67WgrOjHiZkN4qAvjX6-fc5y3US9cPNjbojuqXAIVs34' + 
+            '/s1600-rw/Raven_rider.png';
+
+/* New Cinematics Defeat Assets */
+const rrTumbleImg = new Image(); 
+rrTumbleImg.src = 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/' + 
+                  'AVvXsEgyODHrFcOnyKcztNmMaQQq90-55cf19bp2BI1LbtYcBmSXYtZHbljaX95tloiRFOjMP9cFGbfIsSWzNJUoIT2Xrb3-aJbbJID6bCNs9FJMIN8khRXzGburdsereE4CwpJc8SrcXeCCzIC8_MaNQgxmo8GPNZgsmiZO_G_2K6s9I8XQin_aiPwyVbx3Huht' + 
+                  '/s1600-rw/Tumbling%20Raven.png';
+
+const rrCraterImg = new Image(); 
+rrCraterImg.src = 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/' + 
+                  'AVvXsEh5tYenbl8rPiuJS8s9_xMaUoI-_ewA8kDvwJY7PCY5xYn5PJjJII_Nv8B3z3Klrg6CaWHHh7ROd-BUJIaYk9VoRPj3iWwoDSeKXalu8uP25TNaIgmse35tQi4QR9ocE0yB7kWHB-QcT1Vi1U3kldhPMU32q8uHXEf0J7KFNYdJ9BvL3pS7U4DGqV8FRmz5' + 
+                  '/s1600-rw/crater.png';
+
+const rrFinalSceneImg = new Image(); 
+rrFinalSceneImg.src = 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/' + 
+                      'AVvXsEjKFQXFzmR7suJQ-NqlLQ22sMY-czx4qpXZ-hawqOnenoo11Y3G2WmogNtqYLS6VZsHxghHza0oD3Hy0qQAcrs2wlIAta2fkxTT9hF7bTExoKVibDq8PHPeL5sSAN4XyFNDybsKnIRNLYvpsFaCPk4aZdRyX5lrWr6i8HnhrKWrl37pxOd3kgBUV4VIOYXA' + 
+                      '/s1600-rw/Final%20boss%20scene.png';
+
+/* --- SOUND EFFECTS --- */
+const sndThrow = new Audio('https://atodd81-lang.github.io/stadium-defender/audio/Choo.mp3');
+const sndGameOver = new Audio('https://atodd81-lang.github.io/stadium-defender/audio/goodgameover.mp3');
+const sndRavenBreach = new Audio('https://atodd81-lang.github.io/stadium-defender/audio/Preferred%20breaching%20raven.mp3');
+const sndPurpleHit = new Audio('https://atodd81-lang.github.io/stadium-defender/audio/Purpleravenhit.mp3');
+const sndShadyExit = new Audio('https://atodd81-lang.github.io/stadium-defender/audio/Shady%20leaves%20time%20up.mp3');
+const sndBounce = new Audio('https://atodd81-lang.github.io/stadium-defender/audio/boing(single).mp3');
+const sndDefeatKH = new Audio('https://atodd81-lang.github.io/stadium-defender/audio/defeatkinghenry.mp3');
+const sndDefeatShady = new Audio('https://atodd81-lang.github.io/stadium-defender/audio/defeatshady.mp3');
+const sndDoveSaved = new Audio('https://atodd81-lang.github.io/stadium-defender/audio/dovecooland.mp3');
+const sndDoveHit = new Audio('https://atodd81-lang.github.io/stadium-defender/audio/dovehit.mp3');
+const sndKHExit = new Audio('https://atodd81-lang.github.io/stadium-defender/audio/kinghenryexit.mp3');
+const sndLevelComplete = new Audio('https://atodd81-lang.github.io/stadium-defender/audio/levelcomplete.mp3');
+const sndRavenHit = new Audio('https://atodd81-lang.github.io/stadium-defender/audio/ravenhitgood.mp3');
+
+/* --- NEW BOSS AUDIO --- */
+const sndKHHit = new Audio('https://atodd81-lang.github.io/stadium-defender/audio/King%20Henry%20grunt.mp3');
+const sndCrater = new Audio('https://atodd81-lang.github.io/stadium-defender/audio/METEORITE%20Impact%20Sound.mp3');
+const sndRRHit = new Audio('https://atodd81-lang.github.io/stadium-defender/audio/Raven%20Rider%20Hit.mp3');
+const sndShadyHit = new Audio('https://atodd81-lang.github.io/stadium-defender/audio/shady%20hit.mp3');
+const sndEggHit = new Audio('https://atodd81-lang.github.io/stadium-defender/audio/plunk.mp3');
+const sndEggBreach = new Audio('https://atodd81-lang.github.io/stadium-defender/audio/metal%20ting.mp3');
+
+/* --- BACKGROUND MUSIC --- */
+const bgm1 = new Audio('https://atodd81-lang.github.io/stadium-defender/audio/Level_1(Looped).mp3'); bgm1.loop = true;
+const bgm2 = new Audio('https://atodd81-lang.github.io/stadium-defender/audio/Level_2(Looped).mp3'); bgm2.loop = true;
+const bgm3 = new Audio('https://atodd81-lang.github.io/stadium-defender/audio/Level_3(Looped).mp3'); bgm3.loop = true;
+const bgm4 = new Audio('https://atodd81-lang.github.io/stadium-defender/audio/Level_4_(Looped).mp3'); bgm4.loop = true;
+
+const mboss10 = new Audio('https://atodd81-lang.github.io/stadium-defender/audio/Minor_boss_10.mp3');
+const mboss15 = new Audio('https://atodd81-lang.github.io/stadium-defender/audio/Minor_Boss_15.mp3');
+const mboss20 = new Audio('https://atodd81-lang.github.io/stadium-defender/audio/Minor_Boss_20.mp3');
+
+const rrTheme = new Audio('https://atodd81-lang.github.io/stadium-defender/audio/Raven%20Rider%20Theme.mp3'); rrTheme.loop = true; 
+
+const bgmOutro = new Audio('https://atodd81-lang.github.io/stadium-defender/audio/Outro.mp3');
+const bgmWin = new Audio('https://atodd81-lang.github.io/stadium-defender/audio/Blunt_Blowin.mp3');
+
+const levelMusic = [bgm1, bgm2, bgm3, bgm4];
+
+function playSound(audioObj) {
+    audioObj.currentTime = 0;
+    audioObj.play().catch(() => {});
+}
+
+function stopAllMusic() {
+    levelMusic.forEach(m => { m.pause(); m.currentTime = 0; });
+    mboss10.pause(); mboss10.currentTime = 0;
+    mboss15.pause(); mboss15.currentTime = 0;
+    mboss20.pause(); mboss20.currentTime = 0;
+    rrTheme.pause(); rrTheme.currentTime = 0;
+    bgmOutro.pause(); bgmOutro.currentTime = 0;
+    bgmWin.pause(); bgmWin.currentTime = 0;
+}
+
+function pauseLevelMusic() {
+    if (rd >= 1 && rd <= 4) levelMusic[rd - 1].pause();
+}
+
+function resumeLevelMusic() {
+    if (gs === 'PLAYING' && rd >= 1 && rd <= 4) levelMusic[rd - 1].play().catch(() => {});
+}
+
+function stopBossMusic() {
+    mboss10.pause(); mboss10.currentTime = 0;
+    mboss15.pause(); mboss15.currentTime = 0;
+    mboss20.pause(); mboss20.currentTime = 0;
+    rrTheme.pause(); rrTheme.currentTime = 0;
+}
+
+/* --- GAME STATE VARIABLES --- */
+let gs = 'START', mode = 'ROOKIE';
+let rd = 1, saved = 0, hit = 0, att = 0, rHit = 0, ter = 1, attempts = 1;
+let roundSaved = 0, roundDovesHit = 0, escaped = 0;
+let failMsg = "", gameOverTime = 0, roundOverTime = 0;
+
+/* Core Modifiers & Persistent History States */
+let terBonus = 0;      
+let committedBonus = 0; 
+let shadyDefeated = false;
+let pastSaved = 0, pastHit = 0, pastRHit = 0, pastAtt = 0;
+let globalDovesHit = 0;
+
+let cross = {x:300, y:350}, ravens = [], doves = [], balls = [], keys = {};
+const player = {x:300, y:660};
+
+/* Boss & Element Variables */
+let popups = [];
+let pRavens = [], pRavensSpawnedThisRound = 0;
+let roundTimer = 0, scheduledEvents = [];
+
+/* Note the exitTime variable to track true real-world milliseconds */
+let kh = { active: false, state: 'DONE', x: 300, y: -100, vx: 0, vy: 0, f: 0, t: 0, combo: 0, timer: 0, exitTime: 0 };
+let shady = { active: false, state: 'DONE', mode: 'HOVER', x: 300, y: -100, vx: 0, vy: 0, f: 0, t: 0, combo: 0, hits: 0, timer: 0, hoverTimer: 0, dir: 'L', hoverF: 0, exitTime: 0 };
+let rr = { active: false, state: 'DONE', x: 300, y: 150, vx: 5, vy: 2, f: 0, t: 0, hits: 0, eggTimer: 0 };
+
+let enemyBalls = [], droppedBallsBreached = 0, rrDefeated = false, rrTauntPhase = 0;
+let suppressSpawnsTimer = 0, suppressRavensTimer = 0, heavenSpawnTimer = 0;
+let khTries = 0, bossThrows = 0;
+
+/* Cinematic Trackers */
+let deathSequenceTimer = 0;
+
+function addPopup(text, duration = 120, yOffset = 0) { popups.push({ text: text, timer: duration, y: 350 + yOffset }); }
+
+function calculateTER() {
+    let roundsAdvanced = rd - 1;
+    if (gs === 'WIN' && roundsAdvanced < 4) roundsAdvanced = 4;
+
+    let progScore = roundsAdvanced * 10;
+    let failPenalty = (attempts - 1) * 2;
+    
+    let accScore = att > 0 ? (rHit / att) * 20 : 0;
+    
+    let ravScore = 0;
+    if (rHit > 0) {
+        if (rHit <= 10) ravScore = rHit * 0.1;
+        else ravScore = 1 + (rHit - 10) * (19 / 90);
+    }
+    ravScore = Math.min(20, ravScore);
+    
+    let doveScore = Math.max(0, 20 - (globalDovesHit * (19 / 60)));
+    
+    let baseTER = progScore - failPenalty + accScore + ravScore + doveScore;
+    let finalTER = Math.round(baseTER) + committedBonus + terBonus;
+    
+    return Math.min(100, Math.max(1, finalTER));
+}
+
+function initGame(startRd = 1) {
+    stopAllMusic();
+    rd = startRd; saved = 0; hit = 0; rHit = 0; att = 0; ter = 1; attempts = 1; terBonus = 0; committedBonus = 0;
+    pastSaved = (startRd - 1) * 10;
+    pastHit = 0; pastRHit = 0; pastAtt = 0;
+    globalDovesHit = 0;
+    startNextRound();
+}
+
+function jumpToIntermission(targetRd) {
+    stopAllMusic();
+    rd = targetRd;
+    saved = (targetRd - 1) * 10; pastSaved = saved;
+    hit = 0; pastHit = 0; rHit = 0; pastRHit = 0; att = 0; pastAtt = 0;
+    terBonus = 0; attempts = 1; 
+    globalDovesHit = 0;
+    ter = calculateTER();
+    
+    gs = 'ROUND_OVER';
+    roundSaved = 0; roundDovesHit = 0; escaped = 0; droppedBallsBreached = 0;
+    ravens = []; doves = []; balls = []; pRavens = []; popups = []; enemyBalls = [];
+    pRavensSpawnedThisRound = 0;
+    roundTimer = 0; suppressSpawnsTimer = 0; suppressRavensTimer = 0; heavenSpawnTimer = 0;
+    kh.active = false; kh.state = 'DONE';
+    shady.active = false; shady.state = 'DONE';
+    rr.active = false; rr.state = 'DONE';
+    shadyDefeated = false; rrDefeated = false; khTries = 0; bossThrows = 0; rrTauntPhase = 0;
+    deathSequenceTimer = 0;
+
+    scheduledEvents = [];
+    if (rd === 2 || rd === 3) scheduledEvents.push({type: 'KH', time: 600});
+    else if (rd === 4) scheduledEvents.push({type: 'KH_R4', time: 600});
+    
+    roundOverTime = Date.now();
+}
+
+function startNextRound() {
+    gs = 'PLAYING';
+    roundSaved = 0; roundDovesHit = 0; escaped = 0;
+    ravens = []; doves = []; balls = []; pRavens = []; popups = []; enemyBalls = [];
+    pRavensSpawnedThisRound = 0; droppedBallsBreached = 0;
+    roundTimer = 0; suppressSpawnsTimer = 0; suppressRavensTimer = 0; heavenSpawnTimer = 0;
+    kh.active = false; kh.state = 'DONE';
+    shady.active = false; shady.state = 'DONE';
+    rr.active = false; rr.state = 'DONE';
+    shadyDefeated = false; rrDefeated = false; khTries = 0; bossThrows = 0; rrTauntPhase = 0;
+    deathSequenceTimer = 0;
+
+    scheduledEvents = [];
+    if (rd === 2 || rd === 3) {
+        scheduledEvents.push({type: 'KH', time: 600});
+    } else if (rd === 4) {
+        scheduledEvents.push({type: 'KH_R4', time: 600});
+    }
+
+    stopAllMusic();
+    resumeLevelMusic();
+}
+
+function rollBackToCheckpoint() {
+    saved = pastSaved; hit = pastHit; rHit = pastRHit; att = pastAtt;
+    terBonus = 0; 
+    attempts++; startNextRound();
+}
+
+function saveCheckpoint() {
+    pastSaved = saved; pastHit = hit; pastRHit = rHit; pastAtt = att;
+    committedBonus += terBonus; 
+    terBonus = 0;
+}
+
+function executeGameOver() {
+    gs = 'OVER';
+    failMsg = droppedBallsBreached >= 3 ? "Three Footballs Breached The Stadium" : (escaped >= 4 ? "Four Ravens Breached The Stadium" : "You Hit 3 Doves In One Round");
+    gameOverTime = Date.now();
+    stopAllMusic();
+    playSound(bgmOutro);
+}
+
+window.addEventListener('keydown', (e) => {
+    if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+    
+    /* Fullscreen Toggle on 'F' key */
+    if (e.code === 'KeyF') {
+        if (!document.fullscreenElement) {
+            canvas.requestFullscreen().catch(err => console.log(err));
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+    }
+    
+    if (gs === 'START' || gs === 'WIN') {
+        if (e.code === 'Digit1' || e.code === 'Numpad1') { mode = 'ROOKIE'; initGame(); }
+        if (e.code === 'Digit2' || e.code === 'Numpad2') { mode = 'ALL_PRO'; initGame(); }
+        /* Hidden Shortcuts */
+        if (e.code === 'Digit4' || e.code === 'Numpad4') { mode = 'ALL_PRO'; jumpToIntermission(2); }
+        if (e.code === 'Digit5' || e.code === 'Numpad5') { mode = 'ALL_PRO'; jumpToIntermission(3); }
+        if (e.code === 'Digit6' || e.code === 'Numpad6') { mode = 'ALL_PRO'; jumpToIntermission(4); }
+        if (e.code === 'Digit7' || e.code === 'Numpad7') { mode = 'ROOKIE'; jumpToIntermission(2); }
+        if (e.code === 'Digit8' || e.code === 'Numpad8') { mode = 'ROOKIE'; jumpToIntermission(3); }
+        if (e.code === 'Digit9' || e.code === 'Numpad9') { mode = 'ROOKIE'; jumpToIntermission(4); }
+    } else if (gs === 'PLAYING') {
+        if (e.code === 'Space') {
+            if (kh.active || shady.active || rr.active) bossThrows++;
+            else att++;
+            let ang = Math.atan2(cross.y - player.y, cross.x - player.x);
+            balls.push({x: player.x, y: player.y - 30, vx: Math.cos(ang) * 12, vy: Math.sin(ang) * 12, bounced: false, f:0, t:0});
+            playSound(sndThrow);
+        } else { keys[e.code] = true; }
+    } else if (gs === 'OVER') {
+        if (Date.now() - gameOverTime < 1500) return;
+        if (e.code === 'KeyR') initGame();
+        if (e.code === 'KeyC') rollBackToCheckpoint();
+    } else if (gs === 'ROUND_OVER') {
+        let reqTime = (rd === 4) ? 10000 : 5000;
+        if (Date.now() - roundOverTime < reqTime) return;
+        if (e.code === 'Space') startNextRound();
+    }
+});
+window.addEventListener('keyup', (e) => keys[e.code] = false);
+
+function loop() {
+    ctx.fillStyle = '#7EC0EE'; ctx.fillRect(0,0,600,700);
+    if(bgImg.complete && bgImg.naturalHeight !== 0) ctx.drawImage(bgImg, 0, 0, 600, 700);
+    if(gs === 'PLAYING') {
+        roundTimer++;
+        if(keys.ArrowUp) cross.y-=8; if(keys.ArrowDown) cross.y+=8;
+        if(keys.ArrowLeft) cross.x-=8; if(keys.ArrowRight) cross.x+=8;
+        cross.x = Math.max(0, Math.min(600, cross.x));
+        cross.y = Math.max(0, Math.min(700, cross.y));
+        let diffMod = (mode === 'ALL_PRO') ? 1.25 : 1.0;
+        let rSpawnRate = (rd === 1 ? 0.008 : (rd === 2 ? 0.015 : 0.020)) * diffMod;
+        let rSpd = (rd === 1 ? 0.8 : (rd === 2 ? 1.4 : 1.6)) * diffMod;
+        let dSpawnRate = (rd === 1 ? 0.012 : (rd === 2 ? 0.015 : 0.018));
+        let dSpd = (rd === 1 ? 1.0 : 1.2);
+        let pSpd = rSpd * 1.5;
+
+        /* Manage Boss Scheduling & Spawn Suppression */
+        if (scheduledEvents.length > 0) {
+            let nextEvent = scheduledEvents[0];
+            let prepTime = (rd === 4) ? 180 : 120;
+            if (roundTimer === nextEvent.time - prepTime) {
+                suppressSpawnsTimer = prepTime;
+            }
+            if (roundTimer === nextEvent.time) {
+                
+                if (nextEvent.type === 'KH' || nextEvent.type === 'KH_R4') {
+                    kh.state = 'ACTIVE'; kh.active = true; khTries++;
+                    
+                    /* King Henry is 15 seconds in Round 2, 10 seconds in Rounds 3 & 4 */
+                    let durationSecs = (rd === 2) ? 15 : 10;
+                    
+                    kh.timer = durationSecs * 60;
+                    /* Added 300ms buffer so real-world timer doesn't outpace audio loading */
+                    kh.exitTime = Date.now() + (durationSecs * 1000) + 300; 
+                    
+                    kh.x = Math.random() * 400 + 100; kh.y = -80;
+                    kh.vx = (Math.random() - 0.5) * 6; kh.vy = 3;
+                    kh.combo = 0; bossThrows = 0;
+                    if (nextEvent.type === 'KH_R4') suppressSpawnsTimer = 300; 
+                    
+                    pauseLevelMusic();
+                    if (durationSecs === 10) playSound(mboss10);
+                    if (durationSecs === 15) playSound(mboss15);
+                    if (durationSecs === 20) playSound(mboss20);
+
+                } else if (nextEvent.type === 'SHADY' || nextEvent.type === 'SHADY_R4') {
+                    shady.state = 'ACTIVE'; shady.active = true; shady.mode = 'HOVER';
+                    
+                    /* Shady is 15 seconds in Round 3, 20 seconds in Round 4 */
+                    let durationSecs = (nextEvent.type === 'SHADY_R4') ? 20 : 15;
+                    
+                    shady.timer = durationSecs * 60;
+                    /* Added 300ms buffer so real-world timer doesn't outpace audio loading */
+                    shady.exitTime = Date.now() + (durationSecs * 1000) + 300; 
+                    
+                    shady.hoverTimer = 60; shady.x = 300; shady.y = -80;
+                    shady.vx = 0; shady.vy = 4; shady.dir = 'L';
+                    shady.combo = 0; shady.hits = 0; bossThrows = 0;
+                    if (nextEvent.type === 'SHADY_R4') suppressSpawnsTimer = 300; 
+                    
+                    pauseLevelMusic();
+                    if (durationSecs === 10) playSound(mboss10);
+                    if (durationSecs === 15) playSound(mboss15);
+                    if (durationSecs === 20) playSound(mboss20);
+
+                } else if (nextEvent.type === 'RAVEN_RIDER') {
+                    rr.state = 'ACTIVE'; rr.active = true; rr.hits = 0;
+                    rr.x = 300; rr.y = 100; rr.vx = 8; rr.vy = 3; rr.eggTimer = 60; bossThrows = 0;
+                    
+                    pauseLevelMusic();
+                    rrTheme.play().catch(() => {});
+                }
+                scheduledEvents.shift();
+            }
+        }
+        if (suppressSpawnsTimer > 0) suppressSpawnsTimer--;
+        if (suppressRavensTimer > 0) suppressRavensTimer--;
+        
+        /* Heaven Spawn Delay Trigger */
+        if (heavenSpawnTimer > 0) {
+            heavenSpawnTimer--;
+            if (heavenSpawnTimer <= 0) {
+                addPopup("Heaven Spawn", 120);
+                for (let i=0; i<7; i++) doves.push({x: Math.random()*500+50, y: -Math.random()*200 - 50, f: 0, t: 0, spd: dSpd});
+                suppressRavensTimer = 420;
+            }
+        }
+
+        let bossActive = (kh.active && kh.state !== 'DONE') || (shady.active && shady.state !== 'DONE') || (rr.active && rr.state !== 'DONE');
+
+        const canSpawn = (x) => {
+            for(let r of ravens) if(r.y < 80 && Math.abs(r.x - x) < 60) return false;
+            for(let d of doves) if(d.y < 80 && Math.abs(d.x - x) < 60) return false;
+            for(let p of pRavens) if(p.y < 80 && Math.abs(p.x - x) < 60) return false;
+            return true;
+        };
+
+        /* Entity Spawning Logic */
+        let curDSpawnRate = dSpawnRate;
+        let curRSpawnRate = rSpawnRate;
+        if (rd === 4) {
+            if (kh.active && kh.state === 'ACTIVE' && suppressSpawnsTimer <= 0) { curRSpawnRate *= 0.4; curDSpawnRate *= 0.4; }
+            if (shady.active && shady.state === 'ACTIVE' && suppressSpawnsTimer <= 0) { curRSpawnRate *= 0.85; curDSpawnRate *= 0.85; } 
+            if (rr.active && rr.state === 'ACTIVE') { curRSpawnRate *= 0.5; curDSpawnRate *= 0.5; }
+        }
+
+        if (suppressSpawnsTimer <= 0 && !rrDefeated) {
+            if (suppressRavensTimer <= 0 && Math.random() < curRSpawnRate) {
+                let nx = Math.random()*500+50;
+                if(canSpawn(nx)) {
+                    if (rr.active && rr.state === 'ACTIVE') {
+                        if (Math.random() < 0.75) pRavens.push({x:nx, y:-30, vx:0, f:0, t:0, spd: pSpd});
+                        else ravens.push({x:nx, y:-30, vx:0, f:0, t:0, spd: rSpd});
+                    } else { ravens.push({x:nx, y:-30, vx:0, f:0, t:0, spd: rSpd}); }
+                }
+            }
+            if (Math.random() < curDSpawnRate) {
+                let nx = Math.random()*500+50;
+                if(canSpawn(nx)) doves.push({x:nx, y:-30, f:0, t:0, spd: dSpd});
+            }
+            if (!(rr.active && rr.state === 'ACTIVE') && suppressRavensTimer <= 0 && roundTimer > 1500) {
+                let maxPRavens = rd * 2;
+                if(Math.random() < 0.005 * diffMod && pRavensSpawnedThisRound < maxPRavens) {
+                    if (rd >= 3 || pRavens.length === 0) {
+                        let nx = Math.random()*500+50;
+                        if(canSpawn(nx)) {
+                            pRavens.push({x:nx, y:-30, vx:0, f:0, t:0, spd: pSpd});
+                            pRavensSpawnedThisRound++;
+                        }
+                    }
+                }
+            }
+        }
+
+        /* Update Entities */
+        for (let i = ravens.length - 1; i >= 0; i--) {
+            let r = ravens[i];
+            r.y += r.spd; r.x += r.vx; r.t++;
+            if(r.t > 6) { r.f = (r.f+1)%4; r.t=0; }
+            if(r.y > 700) { escaped++; ravens.splice(i,1); playSound(sndRavenBreach); continue; }
+            ctx.drawImage(ravenImage, 0, r.f*80, 80, 80, r.x-32, r.y-32, 64, 64);
+        }
+
+        for (let i = pRavens.length - 1; i >= 0; i--) {
+            let p = pRavens[i];
+            p.y += p.spd; p.x += p.vx; p.t++;
+            if(p.t > 5) { p.f = (p.f+1)%4; p.t=0; }
+            if(p.y > 700) {
+                roundSaved = Math.max(0, roundSaved - 2);
+                addPopup("-2 Saved Doves");
+                pRavens.splice(i,1);
+                continue;
+            }
+            if (pRavenImg.complete && pRavenImg.naturalHeight) {
+                const h = Math.floor(pRavenImg.naturalHeight / 4);
+                ctx.drawImage(pRavenImg, 0, p.f*h, pRavenImg.naturalWidth, h, p.x-32, p.y-32, 64, 64);
+            }
+        }
+
+        for (let i = doves.length - 1; i >= 0; i--) {
+            let d = doves[i];
+            d.y += d.spd; d.t++;
+            if(d.t > 6) { d.f = (d.f+1)%4; d.t=0; }
+            if(d.y > 700) { roundSaved++; doves.splice(i,1); playSound(sndDoveSaved); continue; }
+            if (doveSheet.complete && doveSheet.naturalHeight) {
+                const fh = Math.floor(doveSheet.naturalHeight / 4);
+                ctx.drawImage(doveSheet, 0, d.f * fh, doveSheet.naturalWidth, fh, d.x - 30, d.y - 30, 60, 60);
+            }
+        }
+
+        for (let i = enemyBalls.length - 1; i >= 0; i--) {
+            let eb = enemyBalls[i];
+            eb.y += eb.vy; eb.t++; 
+            if(eb.t > 4) { eb.f = (eb.f+1)%4; eb.t = 0; }
+            if (eb.y > 700) { 
+                droppedBallsBreached++; 
+                playSound(sndEggBreach);
+                enemyBalls.splice(i, 1); 
+                continue; 
+            }
+            if (eggImg.complete && eggImg.naturalHeight) {
+                let eh = Math.floor(eggImg.naturalHeight / 4); 
+                let crop = 1;
+                let sw = Math.max(1, eggImg.naturalWidth - (crop * 2));
+                let sh = Math.max(1, eh - (crop * 2));
+                ctx.drawImage(eggImg, crop, (eb.f * eh) + crop, sw, sh, eb.x - 37.5, eb.y - 37.5, 75, 75);
+            }
+        }
+
+        /* King Henry Logic */
+        if (kh.active) {
+            kh.t++; if(kh.t > 3) { kh.f = (kh.f + 1) % 6; kh.t = 0; }
+            if (kh.state === 'ACTIVE') {
+                kh.timer--;
+                if (kh.timer % 40 === 0) {
+                    kh.vx = (Math.random() - 0.5) * 12; kh.vy = (Math.random() - 0.5) * 8 + 1;
+                }
+                let khSpd = rSpd * 1.2;
+                kh.x += Math.max(-khSpd*3, Math.min(khSpd*3, kh.vx));
+                kh.y += Math.max(-khSpd*3, Math.min(khSpd*3, kh.vy));
+                if (kh.x < 60) { kh.x = 60; kh.vx *= -1; }
+                if (kh.x > 540) { kh.x = 540; kh.vx *= -1; }
+                if (kh.y < 60) { kh.y = 60; kh.vy *= -1; }
+                if (kh.y > 450) { kh.y = 450; kh.vy *= -1; }
+
+                for(let i = doves.length - 1; i >= 0; i--) { if(Math.hypot(kh.x - doves[i].x, kh.y - doves[i].y) < 60) doves.splice(i, 1); }
+                for(let r of ravens) { if(Math.hypot(kh.x - r.x, kh.y - r.y) < 60) { kh.vx *= -1; r.vx = (Math.random() > 0.5 ? 2 : -2); } }
+
+                /* Trigger escape exactly on real-world timer */
+                if (Date.now() >= kh.exitTime) {
+                    kh.state = 'ESCAPING'; roundSaved = Math.max(0, roundSaved - 5); addPopup("-5 Doves");
+                }
+            } else if (kh.state === 'ESCAPING') {
+                kh.y -= 12;
+                for(let i = doves.length - 1; i >= 0; i--) { if(Math.hypot(kh.x - doves[i].x, kh.y - doves[i].y) < 65) doves.splice(i, 1); }
+                for(let r of ravens) { if(Math.hypot(kh.x - r.x, kh.y - r.y) < 65) r.vx = (Math.random() > 0.5 ? 5 : -5); }
+                
+                if (kh.y < -150) {
+                    kh.active = false; kh.state = 'DONE'; balls.forEach(ball => { if (ball.bounced) ball.destroyed = true; });
+                    suppressSpawnsTimer = 120; playSound(sndKHExit);
+                    
+                    /* WE DO NOT STOP THE BOSS MUSIC HERE so the ticking can naturally conclude */
+                    resumeLevelMusic();
+
+                    if (rd === 2 && khTries === 1) scheduledEvents.push({type: 'KH', time: roundTimer + 1500});
+                    else if (rd === 3 && khTries === 1) scheduledEvents.push({type: 'KH', time: roundTimer + 1500});
+                    else if (rd === 3 && khTries === 2) scheduledEvents.push({type: 'SHADY', time: roundTimer + 1500});
+                    else if (rd === 4 && khTries === 1) scheduledEvents.push({type: 'KH_R4', time: roundTimer + 1500});
+                }
+            }
+            if (kingHenryImg.complete && kingHenryImg.naturalHeight) {
+                const h = Math.floor(kingHenryImg.naturalHeight / 6);
+                let crop = 2;
+                let sw = Math.max(1, kingHenryImg.naturalWidth - (crop * 2));
+                let sh = Math.max(1, h - (crop * 2));
+                ctx.drawImage(kingHenryImg, crop, (kh.f * h) + crop, sw, sh, kh.x - 60, kh.y - 60, 120, 120);
+            }
+        }
+
+        /* Shady Logic */
+        if (shady.active) {
+            if (shady.state === 'ACTIVE') {
+                shady.timer--; shady.hoverTimer--;
+                if (shady.hoverTimer <= 0) {
+                    if (shady.mode === 'HOVER') {
+                        shady.mode = 'DART'; shady.hoverTimer = Math.random() * 20 + 10;
+                        shady.vx = (Math.random() - 0.5) * 30; shady.vy = (Math.random() - 0.5) * 30;
+                    } else {
+                        shady.mode = 'HOVER'; shady.hoverTimer = Math.random() * 40 + 15;
+                        shady.vx = 0; shady.vy = 0;
+                    }
+                } else if (shady.mode === 'DART' && Math.random() < 0.08) {
+                    shady.vx = (Math.random() - 0.5) * 35; shady.vy = (Math.random() - 0.5) * 35;
+                }
+                shady.x += shady.vx; shady.y += shady.vy;
+                if (shady.x < 40) { shady.x = 40; shady.vx *= -1; }
+                if (shady.x > 560) { shady.x = 560; shady.vx *= -1; }
+                if (shady.y < 40) { shady.y = 40; shady.vy *= -1; }
+                if (shady.y > 450) { shady.y = 450; shady.vy *= -1; }
+                if (shady.vx < -1) shady.dir = 'L'; else if (shady.vx > 1) shady.dir = 'R';
+
+                shady.t++;
+                if (shady.mode === 'HOVER') {
+                    if (shady.t > 6) { shady.hoverF = (shady.hoverF + 1) % 3; shady.t = 0; }
+                    shady.f = shady.hoverF === 0 ? 0 : (shady.hoverF === 1 ? 4 : 5);
+                } else { if (shady.t > 4) { shady.f = Math.min(2, shady.f + 1); shady.t = 0; } }
+
+                for(let i = doves.length - 1; i >= 0; i--) { if(Math.hypot(shady.x - doves[i].x, shady.y - doves[i].y) < 45) doves.splice(i, 1); }
+                for(let r of ravens) { if(Math.hypot(shady.x - r.x, shady.y - r.y) < 45) r.vx = (Math.random() > 0.5 ? 4 : -4); }
+
+                /* Trigger exit exactly on real-world timer */
+                if (Date.now() >= shady.exitTime) { shady.state = 'PUNISH_DROP'; }
+            } else if (shady.state === 'PUNISH_DROP') {
+                shady.vy = 18; shady.y += shady.vy; shady.f = 0;
+                if (shady.y > 580) shady.state = 'PUNISH_UP';
+                for(let i = doves.length - 1; i >= 0; i--) { if(Math.hypot(shady.x - doves[i].x, shady.y - doves[i].y) < 55) doves.splice(i, 1); }
+            } else if (shady.state === 'PUNISH_UP') {
+                shady.vy = -30; shady.y += shady.vy; shady.f = 0;
+                for(let i = doves.length - 1; i >= 0; i--) { if(Math.hypot(shady.x - doves[i].x, shady.y - doves[i].y) < 55) doves.splice(i, 1); }
+                
+                if (shady.y < -150) {
+                    shady.active = false; shady.state = 'DONE'; balls.forEach(ball => { if (ball.bounced) ball.destroyed = true; });
+                    addPopup("Hell Spawn", 120); playSound(sndShadyExit);
+                    
+                    /* WE DO NOT STOP THE BOSS MUSIC HERE so the ticking can naturally conclude */
+                    resumeLevelMusic();
+
+                    for (let i=0; i<10; i++) ravens.push({x: Math.random()*500+50, y: -Math.random()*300-50, vx: 0, f: 0, t: 0, spd: rSpd});
+                    for (let i=0; i<2; i++) pRavens.push({x: Math.random()*500+50, y: -Math.random()*300-50, vx: 0, f: 0, t: 0, spd: pSpd});
+                    if (!shadyDefeated) scheduledEvents.push({type: (rd===4?'SHADY_R4':'SHADY'), time: roundTimer + 1500});
+                }
+            }
+            let sImg = (shady.dir === 'L') ? shadyRightImg : shadyLeftImg;
+            if (sImg.complete && sImg.naturalHeight) {
+                const h = Math.floor(sImg.naturalHeight / 6);
+                ctx.drawImage(sImg, 0, (shady.f * h), sImg.naturalWidth, h, shady.x - 40, shady.y - 40, 160, 160);
+            }
+        }
+
+        /* Raven Rider Logic */
+        if (rr.active) {
+            if (rr.state === 'ACTIVE') {
+                rr.x += rr.vx; rr.y += rr.vy;
+                if (Math.random() < 0.05) { rr.vx = (Math.random() - 0.5) * 25; rr.vy = (Math.random() - 0.5) * 12; }
+                if (rr.x < 108) { rr.x = 108; rr.vx *= -1; }
+                if (rr.x > 492) { rr.x = 492; rr.vx *= -1; }
+                if (rr.y < 108) { rr.y = 108; rr.vy *= -1; }
+                if (rr.y > 245) { rr.y = 245; rr.vy *= -1; }
+
+                rr.t++; if (rr.t > 5) { rr.f = (rr.f + 1) % 5; rr.t = 0; }
+                rr.eggTimer--;
+                if (rr.eggTimer <= 0) {
+                    let ox = rr.vx > 0 ? -60 : 60; 
+                    enemyBalls.push({x: rr.x + ox, y: rr.y + 60, vy: rSpd * 1.5 * 0.45, f: 0, t: 0}); 
+                    rr.eggTimer = Math.random() * 60 + 40; 
+                }
+            } else if (rr.state === 'TAUNT') {
+                if (rrTauntPhase === 0) {
+                    rr.x += (player.x - rr.x) * 0.05; rr.y += (player.y - rr.y) * 0.05;
+                    if (Math.hypot(rr.x - player.x, rr.y - player.y) < 50) rrTauntPhase = 1;
+                } else {
+                    rr.y -= 15;
+                    if (rr.y < -200) { 
+                        rr.active = false; 
+                        stopBossMusic(); // Ensure music stops on player loss
+                        executeGameOver(); 
+                    }
+                }
+                rr.t++; if (rr.t > 3) { rr.f = (rr.f + 1) % 5; rr.t = 0; }
+            } else if (rr.state === 'TUMBLING') {
+                rr.y += 6; 
+                rr.t++; if (rr.t > 4) { rr.f = (rr.f + 1) % 8; rr.t = 0; }
+                
+                if (rr.y >= 670) {
+                    rr.y = 670;
+                    rr.state = 'CRATER';
+                    playSound(sndCrater);
+                    rr.f = 0; rr.t = 0;
+                }
+            } else if (rr.state === 'CRATER') {
+                rr.t++;
+                if (rr.t > 6) {
+                    rr.f++;
+                    rr.t = 0;
+                    if (rr.f >= 5) {
+                        rr.state = 'SCENE_LINGER';
+                        deathSequenceTimer = Date.now();
+                        playSound(bgmWin);
+                    }
+                }
+            } else if (rr.state === 'SCENE_LINGER') {
+                if (Date.now() - deathSequenceTimer >= 7000) {
+                    rr.active = false;
+                    saveCheckpoint();
+                    rd++;
+                    gs = 'WIN';
+                }
+            }
+
+            /* Draw sequence handler based on current active cinematic state */
+            if (rr.state === 'ACTIVE' || rr.state === 'TAUNT') {
+                if (rrImg.complete && rrImg.naturalHeight) {
+                    const rrh = Math.floor(rrImg.naturalHeight / 5);
+                    let crop = 10;
+                    let sw = Math.max(1, rrImg.naturalWidth - (crop * 2));
+                    let sh = Math.max(1, rrh - (crop * 2));
+                    ctx.drawImage(rrImg, crop, (rr.f * rrh) + crop, sw, sh, rr.x - 108, rr.y - 108, 216, 216);
+                }
+            } else if (rr.state === 'TUMBLING') {
+                if (rrTumbleImg.complete && rrTumbleImg.naturalHeight) {
+                    const rrh = Math.floor(rrTumbleImg.naturalHeight / 8);
+                    ctx.drawImage(rrTumbleImg, 0, rr.f * rrh, rrTumbleImg.naturalWidth, rrh, rr.x - 108, rr.y - 108, 216, 216);
+                }
+            } else if (rr.state === 'CRATER') {
+                if (rrCraterImg.complete && rrCraterImg.naturalHeight) {
+                    const rrh = Math.floor(rrCraterImg.naturalHeight / 5);
+                    ctx.drawImage(rrCraterImg, 0, rr.f * rrh, rrCraterImg.naturalWidth, rrh, rr.x - 108, rr.y - 108, 216, 216);
+                }
+            } else if (rr.state === 'SCENE_LINGER') {
+                if (rrFinalSceneImg.complete && rrFinalSceneImg.naturalHeight) {
+                    ctx.drawImage(rrFinalSceneImg, rr.x - 108, rr.y - 108, 216, 216);
+                }
+            }
+        }
+        
+        /* Physics & Collisions */
+        for (let i = balls.length - 1; i >= 0; i--) {
+            let b = balls[i];
+            if (b.bounced) {
+                b.y += b.vy;
+                continue;
+            }
+
+            b.x+=b.vx; b.y+=b.vy;
+            b.t++; if (b.t > 3) { b.f = (b.f + 1) % 4; b.t = 0; }
+
+            if (spiralBallImg.complete && spiralBallImg.naturalHeight) {
+                let fh = Math.floor(spiralBallImg.naturalHeight / 4);
+                let cropY = 1;
+                let sh = Math.max(1, fh - (cropY * 2));
+                ctx.drawImage(spiralBallImg, 0, (b.f * fh) + cropY, spiralBallImg.naturalWidth, sh, b.x - 20, b.y - 20, 40, 40);
+            } else {
+                ctx.fillStyle='brown'; ctx.beginPath(); ctx.arc(b.x, b.y, 8, 0, Math.PI*2); ctx.fill();
+            }
+
+            let hitSomething = false;
+
+            for (let ei = enemyBalls.length - 1; ei >= 0; ei--) {
+                let eb = enemyBalls[ei];
+                if (!hitSomething && Math.hypot(b.x - eb.x, b.y - eb.y) < 35) {
+                    playSound(sndEggHit);
+                    enemyBalls.splice(ei, 1); hitSomething = true; b.destroyed = true;
+                }
+            }
+
+            if (!hitSomething && kh.active && kh.state === 'ACTIVE' && Math.hypot(b.x - kh.x, b.y - kh.y) < 60) {
+                playSound(sndKHHit);
+                kh.combo++; hitSomething = true; b.destroyed = true;
+                if (kh.combo >= 2) {
+                    kh.active = false; kh.state = 'DONE'; escaped = 0;
+                    balls.forEach(ball => { if (ball.bounced) ball.destroyed = true; });
+                    suppressSpawnsTimer = 120; playSound(sndDefeatKH);
+                    
+                    stopBossMusic(); // Correctly kills the ticking early because player won
+                    resumeLevelMusic();
+
+                    if (bossThrows <= 4) { terBonus += 15; addPopup("TER 15 Point Bonus Earned", 120, 40); }
+                    else if (bossThrows <= 7) { terBonus += 10; addPopup("TER 10 Point Bonus Earned", 120, 40); }
+                    
+                    if (rd === 4) {
+                        roundDovesHit = 0; addPopup("Clean Slate", 120); suppressRavensTimer = 180;
+                        scheduledEvents.push({type: 'SHADY_R4', time: roundTimer + 600});
+                    } else {
+                        addPopup("All Breaching Ravens Eliminated", 120);
+                        if (rd === 2 && khTries === 1) scheduledEvents.push({type: 'KH', time: roundTimer + 1500});
+                        else if (rd === 3 && khTries === 1) scheduledEvents.push({type: 'KH', time: roundTimer + 1500});
+                        else if (rd === 3 && khTries === 2) scheduledEvents.push({type: 'SHADY', time: roundTimer + 1500});
+                    }
+                }
+            }
+
+            if (!hitSomething && shady.active && shady.state === 'ACTIVE' && Math.hypot(b.x - shady.x, b.y - shady.y) < 50) {
+                playSound(sndShadyHit);
+                shady.hits++; shady.combo++; hitSomething = true; b.destroyed = true;
+                if (shady.hits >= 10 || shady.combo >= 3) {
+                    shady.active = false; shady.state = 'DONE'; shadyDefeated = true; escaped = 0;
+                    balls.forEach(ball => { if (ball.bounced) ball.destroyed = true; });
+                    playSound(sndDefeatShady);
+                    
+                    stopBossMusic(); // Correctly kills the ticking early because player won
+                    resumeLevelMusic();
+
+                    if (bossThrows <= 4) { terBonus += 15; addPopup("TER 15 Point Bonus Earned", 120, 40); }
+                    else if (bossThrows <= 7) { terBonus += 10; addPopup("TER 10 Point Bonus Earned", 120, 40); }
+                    
+                    if (rd === 4) {
+                        roundDovesHit = 0; addPopup("Clean Slate", 120); suppressRavensTimer = 180;
+                        scheduledEvents.push({type: 'RAVEN_RIDER', time: roundTimer + 600});
+                    } else {
+                        addPopup("All Breaching Ravens Eliminated", 120); heavenSpawnTimer = 120;
+                    }
+                }
+            }
+
+            if (!hitSomething && rr.active && rr.state === 'ACTIVE' && Math.hypot(b.x - rr.x, b.y - rr.y) < 100) {
+                playSound(sndRRHit);
+                rr.hits++; hitSomething = true; b.destroyed = true; 
+                if (rr.hits >= 11) {
+                    rr.state = 'TUMBLING'; rr.f = 0; rr.t = 0; rrDefeated = true; addPopup("Raven Rider Defeated!", 120);
+                    suppressRavensTimer = 999999; 
+                    
+                    stopBossMusic(); 
+
+                    balls.forEach(ball => { if (ball.bounced) ball.destroyed = true; });
+                    for (let i = 0; i < 50; i++) doves.push({x: Math.random()*500+50, y: -Math.random()*1000 - 50, f: 0, t: 0, spd: dSpd * 1.5});
+                }
+            }
+
+            if (!hitSomething) {
+                for(let j=0; j<ravens.length; j++) {
+                    if(Math.hypot(b.x-ravens[j].x, b.y-ravens[j].y) < 30) {
+                        ravens.splice(j,1); rHit++; hitSomething = true; playSound(sndRavenHit);
+                        if (kh.active) kh.combo = 0; if (shady.active) shady.combo = 0; break;
+                    }
+                }
+            }
+            if (!hitSomething) {
+                for(let j=0; j<pRavens.length; j++) {
+                    if(Math.hypot(b.x-pRavens[j].x, b.y-pRavens[j].y) < 35) {
+                        pRavens.splice(j,1); hitSomething = true; escaped = Math.max(0, escaped - 2);
+                        addPopup("2 Breaching Ravens Eliminated"); playSound(sndPurpleHit);
+                        if (kh.active) kh.combo = 0; if (shady.active) shady.combo = 0; break;
+                    }
+                }
+            }
+            if(!hitSomething) {
+                for(let j=0; j<doves.length; j++) {
+                    if(Math.hypot(b.x-doves[j].x, b.y-doves[j].y) < 30) {
+                        if (bossActive) {
+                            b.bounced = true; b.vx = 0; b.vy = 8; hitSomething = true; playSound(sndBounce);
+                            if (kh.active) kh.combo = 0; if (shady.active) shady.combo = 0;
+                        } else {
+                            doves.splice(j,1); hit++; roundDovesHit++; globalDovesHit++; hitSomething = true; playSound(sndDoveHit);
+                        }
+                        break;
+                    }
+                }
+            }
+            if (!hitSomething && bossActive && (b.y < 0 || b.x < 0 || b.x > 600)) { kh.combo = 0; shady.combo = 0; }
+            b.destroyed = hitSomething && !b.bounced;
+        }
+        
+        balls = balls.filter(b => (!b.destroyed && b.y >= 0 && b.x >= 0 && b.x <= 600) || (b.bounced && bossActive && b.y < 750));
+        saved = pastSaved + roundSaved; hit = pastHit + roundDovesHit; ter = calculateTER();
+        
+        /* Win / Loss Conditions */
+        let isLosing = (escaped >= 4 || roundDovesHit >= 3 || droppedBallsBreached >= 3);
+        if (isLosing && gs === 'PLAYING' && rr.state !== 'TAUNT' && rr.state !== 'TUMBLING' && rr.state !== 'CRATER' && rr.state !== 'SCENE_LINGER') {
+            if (rr.active && rr.state === 'ACTIVE') {
+                rr.state = 'TAUNT'; rrTauntPhase = 0;
+            } else { 
+                stopBossMusic();
+                executeGameOver(); 
+            }
+        } else if(!isLosing && roundSaved >= 10 && gs === 'PLAYING') {
+            if (rd < 4) {
+                saveCheckpoint(); rd++; gs = 'ROUND_OVER'; roundOverTime = Date.now(); playSound(sndLevelComplete);
+            }
+        }
+        
+        /* --- DRAW WIRES & PERCHED BIRDS --- */
+        ctx.strokeStyle='#555'; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(0,690); ctx.lineTo(600,690); ctx.stroke();
+        let totalDovesToDraw = Math.min(roundSaved, 12);
+        for(let i = 0; i < totalDovesToDraw; i++) {
+            let dx = 15 + (i * 24); if (doveWire.complete) ctx.drawImage(doveWire, dx, 650, 48, 48);
+        }
+        let totalRavensToDraw = Math.min(escaped, 4);
+        for(let i = 0; i < totalRavensToDraw; i++) {
+            let rx = 535 - (i * 35); if (ravenWireImg.complete) ctx.drawImage(ravenWireImg, rx, 642, 48, 48);
+        }
+        
+        if (rd === 4) {
+            for(let i = 0; i < droppedBallsBreached; i++) {
+                if (staticEggImg.complete) {
+                    ctx.drawImage(staticEggImg, 350 + (i * 55), 625, 48, 48);
+                }
+            }
+        }
+
+        /* HUD */
+        ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(0,0,600,40);
+        ctx.fillStyle='white'; ctx.font="14px 'Courier New'"; ctx.textAlign="left";
+        ctx.fillText(`Rnd: ${rd} | Saved: ${roundSaved}/10 | Esc: ${escaped}/4 | D-Hit: ${roundDovesHit}/3`, 10, 25);
+        
+        /* Player Sprite */
+        let sh = (cross.x >= player.x) ? rDog : lDog;
+        let angleFromCenter = Math.atan2(Math.abs(cross.x - player.x), player.y - cross.y);
+        let idx = Math.min(3, Math.max(0, Math.floor((angleFromCenter / (Math.PI / 2)) * 4)));
+        if(sh.complete && sh.naturalHeight) {
+            const h = sh.naturalHeight/4;
+            ctx.drawImage(sh, 0, idx * h, sh.naturalWidth, h, player.x-64, player.y-64, 128, 128);
+        }
+        /* Crosshair */
+        ctx.strokeStyle = '#ff3333'; ctx.lineWidth = 2; ctx.beginPath();
+        ctx.arc(cross.x, cross.y, 12, 0, Math.PI * 2);
+        ctx.moveTo(cross.x - 20, cross.y); ctx.lineTo(cross.x + 20, cross.y);
+        ctx.moveTo(cross.x, cross.y - 20); ctx.lineTo(cross.x, cross.y + 20);
+        ctx.stroke();
+
+        for (let i = popups.length - 1; i >= 0; i--) {
+            let p = popups[i];
+            ctx.fillStyle = 'yellow'; ctx.font = "bold 20px 'Courier New'"; ctx.textAlign = 'center';
+            ctx.fillText(p.text, 300, p.y);
+            p.y -= 0.5; p.timer--;
+            if (p.timer <= 0) popups.splice(i, 1);
+        }
+
+    } else if (gs === 'START') {
+        ctx.fillStyle='rgba(0,0,0,0.85)'; ctx.fillRect(0,0,600,700);
+        ctx.textAlign='center'; ctx.fillStyle='white';
+        ctx.font = "bold 32px 'Courier New'"; ctx.fillText("STADIUM DEFENDER", 300, 250);
+        ctx.font = "16px 'Courier New'"; ctx.fillStyle='#ccc';
+        ctx.fillText("Rules: Save 10 Doves per round.", 300, 310);
+        ctx.fillText("Lose if 4 Ravens breach or 3 Doves hit in a round.", 300, 340);
+        ctx.font = "bold 20px 'Courier New'"; ctx.fillStyle='#7EC0EE';
+        ctx.fillText("SELECT DIFFICULTY:", 300, 420);
+        ctx.fillStyle='white';
+        ctx.fillText("PRESS [1] FOR ROOKIE", 300, 460);
+        ctx.fillText("PRESS [2] FOR ALL-PRO", 300, 500);
+        ctx.fillStyle='#7EC0EE';
+        ctx.font = "bold 16px 'Courier New'";
+        ctx.fillText("PRESS [F] TO TOGGLE FULLSCREEN", 300, 560);
+    } else if (gs === 'OVER' || gs === 'WIN') {
+        ctx.fillStyle='rgba(0,0,0,0.9)'; ctx.fillRect(0,0,600,700);
+        ctx.textAlign='center'; ctx.fillStyle='white';
+        if (gs === 'WIN') {
+            ctx.fillStyle = '#55ff55'; ctx.font = "bold 34px 'Courier New'";
+            ctx.fillText("STADIUM SECURED!", 300, 60);
+            ctx.fillText("YOU WIN!", 300, 100);
+        } else {
+            ctx.font = "bold 34px 'Courier New'"; ctx.fillText("GAME OVER", 300, 80);
+            ctx.font = "bold 16px 'Courier New'"; ctx.fillStyle = "#ff5555";
+            ctx.fillText(failMsg, 300, 120);
+        }
+        ctx.fillStyle='white'; ctx.font = "bold 20px 'Courier New'";
+        ctx.fillText("--- FINAL SCORECARD ---", 300, 180);
+        ctx.font = "18px 'Courier New'";
+        let rAdv = rd === 1 ? "None" : (rd === 2 ? "One" : (rd === 3 ? "Two" : (rd === 4 ? "Three" : "Completed")));
+        ctx.fillText(`Rounds Advanced: ${rAdv}`, 300, 220);
+        ctx.fillText(`Total Ravens Hit: ${rHit}`, 300, 250);
+        ctx.fillText(`Total Doves Hit: ${hit}`, 300, 280);
+        ctx.fillText(`Total Doves Saved: ${saved}`, 300, 310);
+        let ba = att > 0 ? (rHit / att).toFixed(3) : ".000";
+        if (ba.startsWith("0.")) ba = ba.substring(1);
+        ctx.fillText(`Accuracy: ${ba}`, 300, 340);
+        ctx.fillText(`Total Efficiency Rating (TER): ${ter}`, 300, 370);
+        let passer = "";
+        if(ter <= 10) passer = "Spurgeon Wynn"; else if(ter <= 20) passer = "Tim Couch";
+        else if(ter <= 30) passer = "Connor Shaw"; else if(ter <= 40) passer = "Johnny Manziel";
+        else if(ter <= 50) passer = "Jeff Garcia"; else if(ter <= 60) passer = "Derek Anderson";
+        else if(ter <= 70) passer = "Baker Mayfield"; else if(ter <= 80) passer = "Bernie Kosar";
+        else passer = "Otto Graham";
+        ctx.textAlign = 'right'; ctx.font = "20px 'Courier New'"; ctx.fillText("Passer Comparison: ", 300, 440);
+        ctx.textAlign = 'left'; ctx.fillStyle = '#ffcc00'; ctx.font = "bold 26px 'Courier New'";
+        ctx.fillText(passer, 300, 440);
+        if (gs === 'WIN') {
+            ctx.textAlign='center'; ctx.fillStyle='white'; ctx.font = "bold 18px 'Courier New'";
+            ctx.fillText("PRESS [1] TO PLAY AGAIN AS ROOKIE", 300, 520);
+            ctx.fillText("PRESS [2] TO PLAY AGAIN AS ALL-PRO", 300, 560);
+        } else if (Date.now() - gameOverTime > 1500) {
+            ctx.textAlign='center'; ctx.fillStyle='white'; ctx.font = "bold 18px 'Courier New'";
+            ctx.fillText("PRESS [R] TO RESTART GAME", 300, 520);
+            ctx.fillText("PRESS [C] TO CONTINUE ROUND " + rd, 300, 560);
+        }
+    } else if (gs === 'ROUND_OVER') {
+        ctx.fillStyle='rgba(0,0,0,0.9)'; ctx.fillRect(0,0,600,700);
+        ctx.textAlign='center'; ctx.fillStyle='white';
+        ctx.font = "bold 28px 'Courier New'";
+        ctx.fillText("ROUND " + (rd-1) + " COMPLETE", 300, 80);
+        ctx.font = "bold 20px 'Courier New'"; ctx.fillText("--- PERFORMANCE SNAPSHOT ---", 300, 130);
+        ctx.font = "18px 'Courier New'";
+        ctx.fillText(`Total Doves Saved: ${saved}`, 300, 170);
+        ctx.fillText(`Total Doves Hit: ${hit}`, 300, 210);
+        ctx.fillText(`Total Ravens Hit: ${rHit}`, 300, 250);
+        let ba = att > 0 ? (rHit / att).toFixed(3) : ".000";
+        if (ba.startsWith("0.")) ba = ba.substring(1);
+        ctx.fillText(`Accuracy: ${ba}`, 300, 290);
+        ctx.fillText(`Total Efficiency Rating (TER): ${ter}`, 300, 330);
+
+        if (rd === 4) {
+            ctx.fillStyle = '#ffaa00'; ctx.font = "bold 14px 'Courier New'";
+            ctx.fillText("Save 10 doves before 4 ravens breach.", 300, 380);
+            ctx.fillText("Do not hit more than two doves.", 300, 410);
+            ctx.fillText("Watch for falling footballs from above.", 300, 440);
+            ctx.fillText("Do not let more than 3 falling footballs land.", 300, 470);
+        }
+
+        let reqTime = (rd === 4) ? 10000 : 5000;
+        let timeElapsed = Date.now() - roundOverTime;
+        if (timeElapsed < reqTime) {
+            let timeLeft = Math.ceil((reqTime - timeElapsed) / 1000);
+            ctx.font = "bold 16px 'Courier New'"; ctx.fillStyle = "#ffaa00";
+            ctx.fillText(`READYING NEXT ROUND IN ${timeLeft}...`, 300, 530);
+        } else {
+            ctx.font = "bold 16px 'Courier New'"; ctx.fillStyle = "#55ff55";
+            ctx.fillText("PRESS SPACE TO START NEXT ROUND", 300, 530);
+        }
+    }
+    requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>
